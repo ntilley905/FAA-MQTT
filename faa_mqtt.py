@@ -1,14 +1,17 @@
 #!/usr/bin/env python3
 
+import yaml
 import time
 import paho.mqtt.client as paho
 import requests
 import json
 import sys
-broker="192.168.5.5"
+with open("config.yaml", "r") as yamlconfig:
+    config = yaml.safe_load(yamlconfig)
+
 client= paho.Client("FAADelayProgram") #create client object client1.on_publish = on_publish #assign function to callback client1.connect(broker,port) #establish connection client1.publish("house/bulb1","on")
-client.username_pw_set("username", "password")
-client.connect(broker)#connect
+client.username_pw_set(config['mqtt_user'], config['mqtt_pass'])
+client.connect(config['mqtt_broker'])#connect
 pubdatadelay = False
 pubdatagdp = False
 pubdatags = False
