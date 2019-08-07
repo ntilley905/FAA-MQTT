@@ -1,3 +1,6 @@
 mqtt_broker: 0.0.0.0
 mqtt_user: username
 mqtt_pass: password
+airports:
+  - ATL
+  - DTW
