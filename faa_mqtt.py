@@ -60,7 +60,7 @@ while True:
         apiurl = "https://soa.smext.faa.gov/asws/api/airport/status/" + apt
         data = requests.get(apiurl)
         if data.status_code != 200:
-            print('The API returned status code' + data.status_code)
+            print('The API returned status code' + str(data.status_code))
             continue
         datadict = data.json()
         #set datadelay true or false based on API data
