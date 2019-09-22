@@ -24,7 +24,7 @@ def on_disconnect(client, userdata, rc):
 
 def exit_function():
     print('Disconnecting...')
-    client.publish(delays/status,'False',retain=True)
+    client.publish("delays/status",'False',retain=True)
     client.loop_stop()
     client.disconnect()
 
