@@ -7,6 +7,7 @@ import requests
 import json
 import sys
 import atexit
+connection_timeout = 30 # seconds
 with open("config.yaml", "r") as yamlconfig:
     config = yaml.safe_load(yamlconfig)
 
@@ -58,7 +59,16 @@ while True:
     client.publish("delays/status","True",retain=True)
     for apt in airports:
         apiurl = "https://soa.smext.faa.gov/asws/api/airport/status/" + apt
-        data = requests.get(apiurl)
+        start_time = time.time()
+        while True:
+            try:
+                data = requests.get(apiurl)
+                break
+            except ConnectionError:
+                if time.time() > start_time + connection_timeout:
+                    raise Exception('Connection error after {} seconds'.format(connection_timeout))
+                else:
+                    time.sleep(1)
         if data.status_code != 200:
             print('The API returned status code' + str(data.status_code))
             continue
