@@ -7,6 +7,7 @@ import requests
 import json
 import sys
 import atexit
+connection_timeout = 30 # seconds
 with open("config.yaml", "r") as yamlconfig:
     config = yaml.safe_load(yamlconfig)
 
@@ -44,6 +45,8 @@ pubdatags = False
 pubdataend = "None"
 
 airports = config['airports']
+print(airports)
+raise SystemExit
 #define the JSON message to be published later
 message = { "Airport":"ABC", "Delay":False, "GroundDelay":False, "GroundStop":False, "EndTime":"Blank" }
 
@@ -58,7 +61,16 @@ while True:
     client.publish("delays/status","True",retain=True)
     for apt in airports:
         apiurl = "https://soa.smext.faa.gov/asws/api/airport/status/" + apt
-        data = requests.get(apiurl)
+        start_time = time.time()
+        while True:
+            try:
+                data = requests.get(apiurl)
+                break
+            except ConnectionError:
+                if time.time() > start_time + connection_timeout:
+                    raise Exception('Connection error after {} seconds'.format(connection_timeout))
+                else:
+                    time.sleep(1)
         if data.status_code != 200:
             print('The API returned status code' + str(data.status_code))
             continue
@@ -77,52 +89,13 @@ while True:
             pubdatagdp = False
             pubdatags = False
             pubdataend = "None"
-            #if there are delays set the generic delay to true and then check for more
-            #set the number of delays we need to check in a variable
-            datadelaynum = datadict["DelayCount"]
-            n = 0
             #find GDP or GS
-            while n != datadelaynum:
-                #really clunky way to check, need to fix. the FAA API is written so that if there is a GDP, departure, or arrival delay, the type key will be present. but if there
-                #is a GS there will be no type key. so I'm using try to check for the keys and handle each case differently
-                if n > 4:
-                    print("Something weird happened and N was greater than 4.")
-                    break
-                else:
-                    try:
-                        if datadict["Status"][n]["Type"] == "Ground Delay":
-                            pubdatagdp = True
-                            pass
-                        else:
-                            pubdatagdp = False
-                    except KeyError:
-                        pass
-                    except IndexError:
-                        print("IndexError occured. Total delay reasons were " + str(datadelaynum) + " and we were on iteration " + str(n))
-                        print(datadict)
-                        pubdatagdp = "Error"
-                        pass
-                    except:
-                        print("Unexpected error occured during GDP test for " + airports[apt] + ":", sys.exc_info()[0])
-                        pubdatagdp = "Error"
-                        pass
-                    try:
-                        pubdataend = datadict["Status"][n]["EndTime"]
-                        pubdatags = True
-                        pass
-                    except KeyError:
-                        pass
-                    except IndexError:
-                        print("IndexError occured. Total delay reasons were " + str(datadelaynum) + " and we were on iteration " + str(n))
-                        print(datadict)
-                        pubdatags = "Error"
-                        pass
-                    except:
-                        print("Unexpected error occured during GDP test for " + airports[apt] + ":", sys.exc_info()[0])
-                        pubdatags = "Error"
-                        pass
-                    finally:
-                        n += 1
+            for delay in datadict["Status"]:
+                if delay["Type"] == "Ground Delay":
+                    pubdatagdp = True
+                elif delay["Type"] == "Ground Stop":
+                    pubdatags = True
+                    pubdataend = delay["EndTime"]
         message["Airport"] = apt
         message["Delay"] = pubdatadelay
         message["GroundDelay"] = pubdatagdp
@@ -132,6 +105,6 @@ while True:
         topic = "delays/" + apt
         client.publish(topic,jsonmessage,retain=True)
     time.sleep(60)
-    
+
 
 #####
