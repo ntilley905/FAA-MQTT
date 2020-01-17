@@ -46,7 +46,6 @@ pubdataend = "None"
 
 airports = config['airports']
 print(airports)
-raise SystemExit
 #define the JSON message to be published later
 message = { "Airport":"ABC", "Delay":False, "GroundDelay":False, "GroundStop":False, "EndTime":"Blank" }
 
