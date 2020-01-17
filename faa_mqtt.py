@@ -65,7 +65,7 @@ while True:
             try:
                 data = requests.get(apiurl)
                 break
-            except ConnectionError:
+            except RequestException:
                 if time.time() > start_time + connection_timeout:
                     raise Exception('Connection error after {} seconds'.format(connection_timeout))
                 else:
