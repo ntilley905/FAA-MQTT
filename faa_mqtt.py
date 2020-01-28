@@ -4,6 +4,7 @@ import yaml
 import time
 import paho.mqtt.client as paho
 import requests
+import requests.exceptions
 import json
 import sys
 import atexit
@@ -65,10 +66,11 @@ while True:
             try:
                 data = requests.get(apiurl)
                 break
-            except RequestException:
+            except requests.exceptions.ConnectionError:
                 if time.time() > start_time + connection_timeout:
                     raise Exception('Connection error after {} seconds'.format(connection_timeout))
                 else:
+                    print("waiting...")
                     time.sleep(1)
         if data.status_code != 200:
             print('The API returned status code' + str(data.status_code))
