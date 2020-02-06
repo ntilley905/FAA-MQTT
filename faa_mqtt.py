@@ -94,7 +94,7 @@ while True:
             for delay in datadict["Status"]:
                 try:
                     if delay["Type"] == "Ground Delay":
-                    pubdatagdp = True
+                        pubdatagdp = True
                 except KeyError:
                     if delay["EndTime"]:
                         pubdatags = True
