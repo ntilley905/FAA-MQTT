@@ -92,11 +92,13 @@ while True:
             pubdataend = "None"
             #find GDP or GS
             for delay in datadict["Status"]:
-                if delay["Type"] == "Ground Delay":
+                try:
+                    if delay["Type"] == "Ground Delay":
                     pubdatagdp = True
-                elif delay["Type"] == "Ground Stop":
-                    pubdatags = True
-                    pubdataend = delay["EndTime"]
+                except KeyError:
+                    if delay["EndTime"]:
+                        pubdatags = True
+                        pubdataend = delay["EndTime"]
         message["Airport"] = apt
         message["Delay"] = pubdatadelay
         message["GroundDelay"] = pubdatagdp
